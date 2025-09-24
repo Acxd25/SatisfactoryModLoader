@@ -21,7 +21,10 @@ void FFactoryGameModule::StartupModule() {
 			}
 			FString ContentPath = FPaths::ConvertRelativePathToFull(FileName);
 			FPaths::MakePathRelativeTo(ContentPath, *FPaths::ProjectContentDir());
-			FStringTableRegistry::Get().Internal_LocTableFromFile(*FPaths::GetBaseFilename(ContentPath), *FPaths::GetBaseFilename(ContentPath), ContentPath, FPaths::ProjectContentDir());
+			FStringTableRegistry& Registry = FStringTableRegistry::Get();
+			FString TableName = FPaths::GetBaseFilename(ContentPath);
+			Registry.UnregisterStringTable(*TableName); // Ensure the table doesn't exist, such as when hot-reloading
+			Registry.Internal_LocTableFromFile(*TableName, TableName, ContentPath, FPaths::ProjectContentDir());
 			return true;
 		});
 }
