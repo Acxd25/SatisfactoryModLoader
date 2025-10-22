@@ -4,8 +4,17 @@
 #include "Configuration/RawFileFormat/RawFormatValueNumber.h"
 #include "Reflection/BlueprintReflectedObject.h"
 
-UConfigPropertyFloat::UConfigPropertyFloat() {
-    this->Value = 0.0f;
+void UConfigPropertyFloat::PostLoad() {
+    Super::PostLoad();
+    // Migrate to DefaultValue from Value [Remove only this if statement once migration is no longer needed]
+    // PostLoad runs before the user config is deserialized, but it still has the values from the CDO. If DefaultValue
+    // is set to the type default and Value is not, then Value has the old default value that we need to migrate.
+    if (FMath::IsNearlyZero(DefaultValue, SMALL_NUMBER) && !FMath::IsNearlyEqual(Value, DefaultValue, SMALL_NUMBER)) {
+        DefaultValue = Value;
+    }
+    // Set initial value to default value. This runs before the user config is deserialized
+    // and ensures that if the user has never set a value, it's set to the default.
+    Value = DefaultValue;
 }
 
 FString UConfigPropertyFloat::DescribeValue_Implementation() const {
@@ -27,6 +36,23 @@ void UConfigPropertyFloat::Deserialize_Implementation(const URawFormatValue* Raw
 
 void UConfigPropertyFloat::FillConfigStruct_Implementation(const FReflectedObject& ReflectedObject, const FString& VariableName) const {
     ReflectedObject.SetFloatProperty(*VariableName, Value);
+}
+
+bool UConfigPropertyFloat::ResetToDefault_Implementation() {
+    if (!CanResetNow()) {
+        return false;
+    }
+    Value = DefaultValue;
+    MarkDirty();
+    return true;
+}
+
+bool UConfigPropertyFloat::IsSetToDefaultValue_Implementation() const {
+    return FMath::IsNearlyEqual(Value, DefaultValue, SMALL_NUMBER);
+}
+
+FString UConfigPropertyFloat::GetDefaultValueAsString_Implementation() const {
+    return FString::SanitizeFloat(DefaultValue);
 }
 
 FConfigVariableDescriptor UConfigPropertyFloat::CreatePropertyDescriptor_Implementation(

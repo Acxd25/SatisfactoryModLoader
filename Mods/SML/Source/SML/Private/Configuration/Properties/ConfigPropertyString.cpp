@@ -3,8 +3,17 @@
 #include "Configuration/RawFileFormat/RawFormatValueString.h"
 #include "Reflection/BlueprintReflectedObject.h"
 
-UConfigPropertyString::UConfigPropertyString() {
-    this->Value = TEXT("");
+void UConfigPropertyString::PostLoad() {
+    Super::PostLoad();
+    // Migrate to DefaultValue from Value [Remove only this if statement once migration is no longer needed]
+    // PostLoad runs before the user config is deserialized, but it still has the values from the CDO. If DefaultValue
+    // is set to the type default and Value is not, then Value has the old default value that we need to migrate.
+    if (DefaultValue.IsEmpty() && !Value.IsEmpty()) {
+        DefaultValue = Value;
+    }
+    // Set initial value to default value. This runs before the user config is deserialized
+    // and ensures that if the user has never set a value, it's set to the default.
+    Value = DefaultValue;
 }
 
 FString UConfigPropertyString::DescribeValue_Implementation() const {
@@ -28,6 +37,22 @@ void UConfigPropertyString::FillConfigStruct_Implementation(const FReflectedObje
     ReflectedObject.SetStrProperty(*VariableName, Value);
 }
 
+bool UConfigPropertyString::ResetToDefault_Implementation() {
+    if (!CanResetNow()) {
+        return false;
+    }
+    Value = DefaultValue;
+    MarkDirty();
+    return true;
+}
+
+bool UConfigPropertyString::IsSetToDefaultValue_Implementation() const {
+    return Value == DefaultValue;
+}
+
+FString UConfigPropertyString::GetDefaultValueAsString_Implementation() const {
+    return *DefaultValue.ReplaceQuotesWithEscapedQuotes();
+}
 
 FConfigVariableDescriptor UConfigPropertyString::CreatePropertyDescriptor_Implementation(
     UConfigGenerationContext* Context, const FString& OuterPath) const {

@@ -8,14 +8,19 @@ UCLASS()
 class SML_API UConfigPropertyArray : public UConfigProperty, public IConfigValueDirtyHandlerInterface {
     GENERATED_BODY()
 public:
-    /** Defines "template" default value used for allocating other values in the array */
-    UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Configuration Property")
+    /** Defines the "template" default value used for allocating other values in the array */
+    UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Configuration Property", meta = (DisplayName= "New Value Template"))
     UConfigProperty* DefaultValue;
-    
-    /** Current values of this configuration property. Should be of the same type as DefaultValue, names don't matter */
+
+    /** Default values of this configuration property. This is the value the property resets to. Should be of the same type as DefaultValue, names don't matter */
     UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Configuration Property")
+    TArray<UConfigProperty*> DefaultValues;
+
+    /** Runtime values of this configuration property. */
+    UPROPERTY(Instanced, BlueprintReadWrite, Category = "Configuration Property")
     TArray<UConfigProperty*> Values;
 
+public:
     /** Allocates new default element and inserts it at the specified index */
     UFUNCTION(BlueprintCallable)
     UConfigProperty* AddNewElement();
@@ -31,9 +36,11 @@ public:
     //Begin UObject
 #if WITH_EDITOR
     virtual bool CanEditChange(const FProperty* InProperty) const override;
-    virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;    
+    virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
 #endif
     //End UObject
+
+    virtual void PostLoad() override;
 
     //Begin UConfigProperty
     virtual FString DescribeValue_Implementation() const override;
@@ -41,6 +48,9 @@ public:
     virtual void Deserialize_Implementation(const URawFormatValue* Value) override;
     virtual FConfigVariableDescriptor CreatePropertyDescriptor_Implementation(UConfigGenerationContext* Context, const FString& OuterPath) const override;
     virtual void FillConfigStruct_Implementation(const FReflectedObject& ReflectedObject, const FString& VariableName) const override;
+    virtual bool ResetToDefault_Implementation() override;
+    virtual bool IsSetToDefaultValue_Implementation() const override;
+    virtual FString GetDefaultValueAsString_Implementation() const override;
     //End UConfigProperty
 
     //Begin IConfigValueDirtyHandlerInterface

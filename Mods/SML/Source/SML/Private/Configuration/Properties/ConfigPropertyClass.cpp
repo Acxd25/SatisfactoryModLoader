@@ -7,9 +7,22 @@
 #define LOCTEXT_NAMESPACE "SML"
 
 UConfigPropertyClass::UConfigPropertyClass() {
-    this->Value = NULL;
+    DefaultValue = NULL;
     BaseClass = UObject::StaticClass();
     bLimitBaseClass = false;
+}
+
+void UConfigPropertyClass::PostLoad() {
+    Super::PostLoad();
+    // Migrate to DefaultValue from Value [Remove only this if statement once migration is no longer needed]
+    // PostLoad runs before the user config is deserialized, but it still has the values from the CDO. If DefaultValue
+    // is set to the type default and Value is not, then Value has the old default value that we need to migrate.
+    if (DefaultValue == NULL && Value != DefaultValue) {
+        DefaultValue = Value;
+    }
+    // Set initial value to default value. This runs before the user config is deserialized
+    // and ensures that if the user has never set a value, it's set to the default.
+    Value = DefaultValue;
 }
 
 bool UConfigPropertyClass::IsValidValueClass(UClass* Class) const {
@@ -64,6 +77,23 @@ void UConfigPropertyClass::Deserialize_Implementation(const URawFormatValue* Raw
 
 void UConfigPropertyClass::FillConfigStruct_Implementation(const FReflectedObject& ReflectedObject, const FString& VariableName) const {
     ReflectedObject.SetObjectProperty(*VariableName, Value);
+}
+
+bool UConfigPropertyClass::ResetToDefault_Implementation() {
+    if (!CanResetNow()) {
+        return false;
+    }
+    SetClassValue(DefaultValue);
+    MarkDirty();
+    return true;
+}
+
+bool UConfigPropertyClass::IsSetToDefaultValue_Implementation() const {
+    return Value == DefaultValue;
+}
+
+FString UConfigPropertyClass::GetDefaultValueAsString_Implementation() const {
+    return DefaultValue ? DefaultValue->GetName() : TEXT("");
 }
 
 FConfigVariableDescriptor UConfigPropertyClass::CreatePropertyDescriptor_Implementation(
