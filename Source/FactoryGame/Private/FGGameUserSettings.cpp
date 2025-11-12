@@ -54,6 +54,7 @@ void UFGGameUserSettings::OnGamepadRumbleEnabledUpdated(FString updatedCvar){  }
 void UFGGameUserSettings::OnGamepadRumbleStrengthUpdated(FString updatedCvar){  }
 void UFGGameUserSettings::OnGamepadSpeakerEnabledUpdated(FString updatedCVar){  }
 void UFGGameUserSettings::OnGamepadSpeakerVolumeUpdated(FString updatedCVar){  }
+void UFGGameUserSettings::OnConveyorItemFrequencyUpdated(FString updatedCvar){ }
 void UFGGameUserSettings::OnFoliageQualityUpdated(FString updatedCvar){ }
 void UFGGameUserSettings::OnOnlineIntegrationModeUpdated(bool bInvokedByUser){  }
 void UFGGameUserSettings::OnMotionBlurEnabledUpdated(FString updatedCvar){ }
@@ -126,6 +127,7 @@ void UFGGameUserSettings::TryInitUserSettings(){ }
 void UFGGameUserSettings::InitUserSettings(){ }
 void UFGGameUserSettings::SetPrimaryLangaugeToPlatformDefault(){  }
 UFGGameInstance* UFGGameUserSettings::GetPrimaryGameInstance(){ return nullptr; }
+bool UFGGameUserSettings::IsRunningOnSteamDeckOrConsole(){ return false; }
 ULocalUserInfo* UFGGameUserSettings::GetLocalUserInfo(){ return nullptr; }
 void UFGGameUserSettings::OnPreMapLoad(const FString& MapName){ }
 void UFGGameUserSettings::SetCvarValue(FString cvar, int32 value){ }
